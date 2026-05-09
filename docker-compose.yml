@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+  cairo-transport:
+    build: .
+    image: cairo-transport:latest
+    container_name: cairo_transport_app
+    ports:
+      - "5000:5000"
+    volumes:
+      # Persist trained ML models between runs
+      - ./models:/app/models
+    environment:
+      - PORT=5000
+      - FLASK_DEBUG=false
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/summary"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s

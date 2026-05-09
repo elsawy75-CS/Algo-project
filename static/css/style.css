@@ -1,0 +1,164 @@
+/* ─── Cairo Smart Transport — style.css ─── */
+:root {
+  --bg:       #0f1117;
+  --bg2:      #181c27;
+  --bg3:      #1e2336;
+  --border:   #2a3050;
+  --text:     #e8eaf0;
+  --text2:    #8b92a8;
+  --text3:    #555e78;
+  --blue:     #2563eb;
+  --green:    #059669;
+  --amber:    #d97706;
+  --red:      #dc2626;
+  --purple:   #7c3aed;
+  --radius:   10px;
+  --shadow:   0 2px 12px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+#app{max-width:1400px;margin:0 auto;padding:16px}
+
+/* ── Header ── */
+.header{display:flex;align-items:center;justify-content:space-between;padding:14px 0 16px;border-bottom:1px solid var(--border);margin-bottom:16px}
+.header-brand{display:flex;align-items:center;gap:12px}
+.header-icon{font-size:28px}
+.header-title{font-size:17px;font-weight:600;color:var(--text)}
+.header-sub{font-size:11px;color:var(--text2)}
+.header-status{display:flex;align-items:center;gap:12px}
+.header-time{font-size:12px;color:var(--text2)}
+
+/* ── Badges ── */
+.badge{display:inline-block;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:500}
+.badge-success{background:rgba(5,150,105,.15);color:#34d399}
+.badge-info{background:rgba(37,99,235,.15);color:#60a5fa}
+.badge-warn{background:rgba(217,119,6,.15);color:#fbbf24}
+.badge-danger{background:rgba(220,38,38,.15);color:#f87171}
+
+/* ── Metrics ── */
+.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}
+.metric-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px}
+.metric-label{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.metric-value{font-size:22px;font-weight:600;color:var(--text)}
+.metric-sub{font-size:10px;color:var(--text3);margin-top:2px}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:2px;margin-bottom:14px;border-bottom:1px solid var(--border)}
+.tab{background:transparent;border:none;border-bottom:2px solid transparent;padding:8px 14px;font-size:13px;color:var(--text2);cursor:pointer;margin-bottom:-1px;transition:all .15s}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--text);border-bottom-color:var(--blue);font-weight:500}
+
+/* ── Panels ── */
+.panel{display:none}.panel.active{display:block}
+
+/* ── Cards ── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow)}
+.card-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;font-size:13px;font-weight:500;color:var(--text2)}
+
+/* ── Layout ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.control-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.form-group label{font-size:11px;color:var(--text2)}
+
+/* ── Inputs ── */
+select,input[type=text],input[type=range]{
+  background:var(--bg3);border:1px solid var(--border);border-radius:6px;
+  padding:6px 10px;font-size:12px;color:var(--text);width:100%;cursor:pointer}
+input[type=range]{padding:4px;cursor:pointer}
+input[type=checkbox]{width:auto;cursor:pointer}
+
+/* ── Buttons ── */
+.btn{background:transparent;border:1px solid var(--border);border-radius:6px;padding:6px 14px;font-size:12px;color:var(--text);cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn:hover{background:var(--bg3)}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.primary:hover{opacity:.85}
+.btn.danger{background:var(--red);border-color:var(--red);color:#fff}
+.btn.danger:hover{opacity:.85}
+.full-width{width:100%}
+
+/* ── Network Canvas ── */
+.network-canvas{width:100%;display:block;border-radius:8px;background:var(--bg3);cursor:crosshair}
+.small-canvas{height:280px}
+
+/* ── Legend ── */
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;font-size:11px;color:var(--text2)}
+.leg{display:flex;align-items:center;gap:5px}
+.leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.leg-line{width:22px;height:3px;border-radius:2px;flex-shrink:0}
+.leg-line.green{background:#059669}
+.leg-line.amber{background:#d97706}
+.leg-line.red{background:#dc2626}
+
+/* ── Tables ── */
+.scroll-table{max-height:280px;overflow-y:auto;border-radius:6px}
+.data-table{width:100%;border-collapse:collapse;font-size:12px}
+.data-table th{position:sticky;top:0;background:var(--bg3);padding:7px 8px;text-align:left;font-size:10px;font-weight:500;color:var(--text2);border-bottom:1px solid var(--border)}
+.data-table td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--text)}
+.data-table tr:hover td{background:rgba(255,255,255,.02)}
+.data-table tr:last-child td{border-bottom:none}
+.dp-table td,.dp-table th{font-size:10px;text-align:center;padding:4px}
+.dp-cell-opt{background:rgba(5,150,105,.2);color:#34d399;font-weight:500}
+
+/* ── Route result ── */
+.route-result{background:var(--bg3);border-radius:8px;padding:12px;font-size:12px;line-height:1.8;margin-top:8px}
+.route-result.hidden{display:none}
+.route-step{display:flex;align-items:center;gap:8px;padding:2px 0}
+.step-node{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.step-node.normal{background:var(--blue)}
+.step-node.end{background:var(--green)}
+.step-node.emerg{background:var(--red)}
+.route-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+
+/* ── Signal grid ── */
+.signal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.signal-box{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center}
+.signal-light{width:22px;height:22px;border-radius:50%;margin:0 auto 6px;transition:background .4s,box-shadow .4s}
+.signal-light.green{background:#22c55e;box-shadow:0 0 10px #22c55e}
+.signal-light.amber{background:#f59e0b;box-shadow:0 0 10px #f59e0b}
+.signal-light.red{background:#ef4444;box-shadow:0 0 10px #ef4444}
+.signal-name{font-size:11px;font-weight:500;margin-bottom:2px}
+.signal-info{font-size:10px;color:var(--text2)}
+
+/* ── Race ── */
+.race-container{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:start}
+.race-panel{padding:8px}
+.race-title{font-size:13px;font-weight:600;margin-bottom:8px;text-align:center}
+.dijkstra-color{color:#60a5fa}
+.astar-color{color:#34d399}
+.race-divider{display:flex;flex-direction:column;align-items:center;justify-content:center;padding-top:60px;gap:16px}
+.race-vs{font-size:20px;font-weight:700;color:var(--text2)}
+.race-verdict{background:var(--bg3);border-radius:8px;padding:8px;font-size:11px;text-align:center;color:var(--text2);line-height:1.6}
+.race-stats{background:var(--bg3);border-radius:6px;padding:10px;font-size:11px;line-height:1.8;margin-top:8px;color:var(--text2)}
+.race-stats strong{color:var(--text)}
+
+/* ── Info grid ── */
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px}
+.info-item{background:var(--bg3);border-radius:6px;padding:8px 10px}
+.info-item .label{font-size:10px;color:var(--text2);margin-bottom:2px}
+.info-item .value{font-size:15px;font-weight:600;color:var(--text)}
+
+/* ── Optimality ── */
+.opt-card{background:var(--bg3);border-radius:8px;padding:10px 12px;margin-bottom:8px;border-left:3px solid transparent}
+.opt-card.optimal{border-color:var(--green)}
+.opt-card.suboptimal{border-color:var(--red)}
+.opt-title{font-size:12px;font-weight:500;margin-bottom:4px}
+.opt-reason{font-size:11px;color:var(--text2);line-height:1.5}
+
+/* ── Progress bar ── */
+.progress-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:3px}
+.progress-fill{height:100%;border-radius:3px;transition:width .4s}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .metrics{grid-template-columns:repeat(2,1fr)}
+  .two-col{grid-template-columns:1fr}
+  .race-container{grid-template-columns:1fr}
+  .race-divider{flex-direction:row;padding-top:0;padding:8px 0}
+  .signal-grid{grid-template-columns:repeat(2,1fr)}
+}
