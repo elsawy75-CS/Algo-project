@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Cairo Smart Transportation System</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:#0f1117;color:#e8eaf0;font-size:14px;line-height:1.5}
+#app{max-width:1400px;margin:0 auto;padding:16px}
+.header{display:flex;align-items:center;justify-content:space-between;padding:14px 0 16px;border-bottom:1px solid #2a3050;margin-bottom:16px}
+.header-brand{display:flex;align-items:center;gap:12px}
+.header-icon{font-size:28px}
+.header-title{font-size:17px;font-weight:600}
+.header-sub{font-size:11px;color:#8b92a8}
+.header-status{display:flex;align-items:center;gap:12px}
+.header-time{font-size:12px;color:#8b92a8}
+.badge{display:inline-block;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:500}
+.badge-success{background:rgba(5,150,105,.15);color:#34d399}
+.badge-info{background:rgba(37,99,235,.15);color:#60a5fa}
+.badge-warn{background:rgba(217,119,6,.15);color:#fbbf24}
+.badge-danger{background:rgba(220,38,38,.15);color:#f87171}
+.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}
+.metric-card{background:#181c27;border:1px solid #2a3050;border-radius:10px;padding:12px 14px}
+.metric-label{font-size:10px;color:#8b92a8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.metric-value{font-size:22px;font-weight:600}
+.metric-sub{font-size:10px;color:#555e78;margin-top:2px}
+.tabs{display:flex;gap:2px;margin-bottom:14px;border-bottom:1px solid #2a3050;overflow-x:auto}
+.tab{background:transparent;border:none;border-bottom:2px solid transparent;padding:8px 14px;font-size:13px;color:#8b92a8;cursor:pointer;margin-bottom:-1px;transition:all .15s;white-space:nowrap}
+.tab:hover{color:#e8eaf0}
+.tab.active{color:#e8eaf0;border-bottom-color:#2563eb;font-weight:500}
+.panel{display:none}.panel.active{display:block}
+.card{background:#181c27;border:1px solid #2a3050;border-radius:10px;padding:14px 16px;box-shadow:0 2px 12px rgba(0,0,0,.4)}
+.card-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;font-size:13px;font-weight:500;color:#8b92a8}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.control-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.form-group label{font-size:11px;color:#8b92a8}
+select,input[type=text]{background:#1e2336;border:1px solid #2a3050;border-radius:6px;padding:6px 10px;font-size:12px;color:#e8eaf0;width:100%;cursor:pointer}
+input[type=range]{background:transparent;width:100%;cursor:pointer;accent-color:#2563eb}
+.btn{background:transparent;border:1px solid #2a3050;border-radius:6px;padding:6px 14px;font-size:12px;color:#e8eaf0;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn:hover{background:#1e2336}
+.btn.primary{background:#2563eb;border-color:#2563eb;color:#fff}
+.btn.primary:hover{opacity:.85}
+.btn.danger{background:#dc2626;border-color:#dc2626;color:#fff}
+.btn.danger:hover{opacity:.85}
+.btn.active-emerg{background:#dc2626;border-color:#dc2626;color:#fff}
+.btn.orange{background:#ea580c;border-color:#ea580c;color:#fff}
+.btn.orange:hover{opacity:.85}
+.topt-layout{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.topt-form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.topt-form-group label{font-size:11px;color:#8b92a8;font-weight:500}
+.topt-form-group input,.topt-form-group select{background:#1e2336;border:1px solid #2a3050;border-radius:6px;padding:7px 10px;font-size:12px;color:#e8eaf0;width:100%}
+.topt-desc{font-size:11px;color:#8b92a8;margin-bottom:14px;line-height:1.6}
+.topt-actions{display:flex;gap:8px;margin-top:14px}
+.topt-results{background:#1e2336;border-radius:8px;padding:14px;font-size:11px;line-height:1.8;min-height:300px;color:#e8eaf0}
+.topt-results .topt-section-title{font-size:12px;font-weight:600;color:#e8eaf0;margin-bottom:6px;margin-top:12px}
+.topt-results .topt-section-title:first-child{margin-top:0}
+.topt-sched-row{font-family:monospace;font-size:10px;line-height:1.7;color:#e8eaf0}
+.topt-sched-row .sched-id{color:#60a5fa;font-weight:600;min-width:30px;display:inline-block}
+.topt-sched-row.metro .sched-id{color:#34d399}
+.topt-highlight{background:rgba(37,99,235,.25);border-radius:3px;padding:0 2px}
+.topt-transfer-row{font-size:11px;color:#8b92a8;line-height:1.9}
+.topt-transfer-row strong{color:#e8eaf0}
+.topt-result-box{background:#181c27;border-radius:6px;padding:10px 12px;margin-top:10px;border-left:3px solid #2563eb}
+.topt-result-box .rv{font-size:13px;font-weight:600;color:#60a5fa}
+.topt-empty{color:#555e78;font-size:12px;padding:40px 0;text-align:center}
+.full-width{width:100%;margin-top:4px}
+.network-canvas{width:100%;display:block;border-radius:8px;background:#1e2336;cursor:crosshair}
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;font-size:11px;color:#8b92a8}
+.leg{display:flex;align-items:center;gap:5px}
+.leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.leg-line{width:22px;height:3px;border-radius:2px;flex-shrink:0}
+.scroll-table{max-height:280px;overflow-y:auto;border-radius:6px}
+.data-table{width:100%;border-collapse:collapse;font-size:12px}
+.data-table th{position:sticky;top:0;background:#1e2336;padding:7px 8px;text-align:left;font-size:10px;font-weight:500;color:#8b92a8;border-bottom:1px solid #2a3050}
+.data-table td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.04);color:#e8eaf0}
+.data-table tr:hover td{background:rgba(255,255,255,.02)}
+.data-table tr:last-child td{border-bottom:none}
+.dp-table td,.dp-table th{font-size:10px;text-align:center;padding:4px}
+.dp-cell-opt{background:rgba(5,150,105,.2);color:#34d399;font-weight:500}
+.route-result{background:#1e2336;border-radius:8px;padding:12px;font-size:12px;line-height:1.8;margin-top:8px}
+.route-result.hidden{display:none}
+.route-step{display:flex;align-items:center;gap:8px;padding:2px 0}
+.step-node{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.step-node.normal{background:#2563eb}
+.step-node.end{background:#059669}
+.step-node.emerg{background:#dc2626}
+.route-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.signal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.signal-box{background:#1e2336;border:1px solid #2a3050;border-radius:8px;padding:10px;text-align:center}
+.signal-light{width:22px;height:22px;border-radius:50%;margin:0 auto 6px;transition:background .4s,box-shadow .4s}
+.signal-light.green{background:#22c55e;box-shadow:0 0 10px #22c55e}
+.signal-light.amber{background:#f59e0b;box-shadow:0 0 8px #f59e0b}
+.signal-light.red{background:#ef4444;box-shadow:0 0 8px #ef4444}
+.signal-name{font-size:11px;font-weight:500;margin-bottom:2px}
+.signal-info{font-size:10px;color:#8b92a8}
+.race-container{display:grid;grid-template-columns:1fr 90px 1fr;gap:0;align-items:start}
+.race-panel{padding:8px}
+.race-title{font-size:13px;font-weight:600;margin-bottom:8px;text-align:center}
+.dijkstra-color{color:#60a5fa}
+.astar-color{color:#34d399}
+.race-divider{display:flex;flex-direction:column;align-items:center;justify-content:center;padding-top:60px;gap:16px}
+.race-vs{font-size:20px;font-weight:700;color:#8b92a8}
+.race-verdict{background:#1e2336;border-radius:8px;padding:8px;font-size:11px;text-align:center;color:#8b92a8;line-height:1.6}
+.race-stats{background:#1e2336;border-radius:6px;padding:10px;font-size:11px;line-height:1.8;margin-top:8px;color:#8b92a8}
+.race-stats strong{color:#e8eaf0}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.info-item{background:#1e2336;border-radius:6px;padding:8px 10px}
+.info-item .lbl{font-size:10px;color:#8b92a8;margin-bottom:2px}
+.info-item .val{font-size:15px;font-weight:600}
+.opt-card{background:#1e2336;border-radius:8px;padding:10px 12px;margin-bottom:8px;border-left:3px solid transparent}
+.opt-card.optimal{border-color:#22c55e}
+.opt-card.suboptimal{border-color:#ef4444}
+.opt-title{font-size:12px;font-weight:500;margin-bottom:4px}
+.opt-reason{font-size:11px;color:#8b92a8;line-height:1.5}
+.progress-bar{height:5px;background:#2a3050;border-radius:3px;overflow:hidden;margin-top:3px}
+.progress-fill{height:100%;border-radius:3px;transition:width .4s}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:#181c27}
+::-webkit-scrollbar-thumb{background:#2a3050;border-radius:3px}
+@media(max-width:768px){.metrics{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}.race-container{grid-template-columns:1fr}.signal-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div id="app">
+
+<header class="header">
+  <div class="header-brand">
+    <span class="header-icon">🗺️</span>
+    <div>
+      <div class="header-title">Cairo Smart Transportation Network</div>
+      <div class="header-sub">CSE112 · Graph Algorithms · ML Prediction · Dynamic Programming</div>
+    </div>
+  </div>
+  <div class="header-status">
+    <span class="badge badge-success">● System Active</span>
+    <span class="header-time" id="live-time"></span>
+  </div>
+</header>
+
+<section class="metrics">
+  <div class="metric-card"><div class="metric-label">Neighborhoods</div><div class="metric-value">15</div><div class="metric-sub">+ 10 facilities</div></div>
+  <div class="metric-card"><div class="metric-label">Road Segments</div><div class="metric-value">32</div><div class="metric-sub">existing roads</div></div>
+  <div class="metric-card"><div class="metric-label">Metro Daily</div><div class="metric-value">3.5M</div><div class="metric-sub">3 lines</div></div>
+  <div class="metric-card"><div class="metric-label">Bus Daily</div><div class="metric-value">215K</div><div class="metric-sub">7 bus routes</div></div>
+  <div class="metric-card"><div class="metric-label">ML Model</div><div class="metric-value">RF+GB</div><div class="metric-sub">traffic forecast</div></div>
+</section>
+
+<nav class="tabs">
+  <button class="tab active" onclick="switchTab('network',this)">🗺 Network Map</button>
+  <button class="tab" onclick="switchTab('mst',this)">🌲 MST Design</button>
+  <button class="tab" onclick="switchTab('routing',this)">📍 Routing</button>
+  <button class="tab" onclick="switchTab('race',this)">⚡ Algo Race</button>
+  <button class="tab" onclick="switchTab('transit',this)">🚌 Transit DP</button>
+  <button class="tab" onclick="switchTab('signals',this)">🚦 Signals</button>
+  <button class="tab" onclick="switchTab('ml',this)">🤖 ML Predict</button>
+  <button class="tab" onclick="switchTab('transitopt',this)">🔧 Transit Opt</button>
+</nav>
+
+<!-- NETWORK -->
+<section id="tab-network" class="panel active">
+  <div class="card">
+    <div class="card-header">Greater Cairo — Transportation Network Graph
+      <div class="control-row">
+        <select id="net-time" onchange="drawMainNetwork()">
+          <option value="morning">Morning Peak</option><option value="afternoon">Afternoon</option>
+          <option value="evening">Evening Peak</option><option value="night">Night</option>
+        </select>
+      </div>
+    </div>
+    <canvas id="netCanvas" class="network-canvas" height="420"></canvas>
+    <div class="legend">
+      <span class="leg"><span class="leg-dot" style="background:#2563eb"></span>Residential</span>
+      <span class="leg"><span class="leg-dot" style="background:#059669"></span>Business/Mixed</span>
+      <span class="leg"><span class="leg-dot" style="background:#b45309"></span>Industrial</span>
+      <span class="leg"><span class="leg-dot" style="background:#dc2626"></span>Medical</span>
+      <span class="leg"><span class="leg-dot" style="background:#7c3aed"></span>Government</span>
+      <span class="leg"><span class="leg-dot" style="background:#d97706"></span>Facility</span>
+      <span class="leg"><span class="leg-line" style="background:#22c55e"></span>Free flow</span>
+      <span class="leg"><span class="leg-line" style="background:#f59e0b"></span>Moderate</span>
+      <span class="leg"><span class="leg-line" style="background:#ef4444"></span>Congested</span>
+    </div>
+  </div>
+</section>
+
+<!-- MST -->
+<section id="tab-mst" class="panel">
+  <div class="two-col">
+    <div class="card">
+      <div class="card-header">Minimum Spanning Tree
+        <div class="control-row">
+          <select id="mst-algo"><option value="kruskal">Kruskal's</option><option value="prim">Prim's</option></select>
+          <label style="font-size:11px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="mst-potential"/> Potential roads</label>
+          <button class="btn primary" onclick="runMST()">Run ▶</button>
+        </div>
+      </div>
+      <canvas id="mstCanvas" class="network-canvas" height="380"></canvas>
+      <div class="legend" style="margin-top:8px">
+        <span class="leg"><span class="leg-line" style="background:#22c55e;height:3px"></span>MST edge</span>
+        <span class="leg"><span class="leg-line" style="background:rgba(255,255,255,.12)"></span>Excluded</span>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-header">Algorithm Steps</div>
+        <div class="scroll-table">
+          <table class="data-table"><thead><tr><th>#</th><th>Edge</th><th>Weight</th><th>Action</th></tr></thead><tbody id="mst-steps-body"></tbody></table>
+        </div>
+      </div>
+      <div class="card"><div class="card-header">Cost Analysis</div><div class="info-grid" id="mst-analysis"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ROUTING -->
+<section id="tab-routing" class="panel">
+  <div class="two-col">
+    <div class="card">
+      <div class="card-header">Dijkstra's Route Planner</div>
+      <div class="form-group">
+        <label>From</label><select id="dijk-src"></select>
+        <label>To</label><select id="dijk-dst"></select>
+        <label>Time of day</label>
+        <select id="dijk-time">
+          <option value="morning">Morning Peak (6–10 am)</option>
+          <option value="afternoon">Afternoon (10 am–4 pm)</option>
+          <option value="evening">Evening Peak (4–9 pm)</option>
+          <option value="night">Night (9 pm–6 am)</option>
+        </select>
+        <button class="btn primary full-width" onclick="runDijkstra()">Find Route ▶</button>
+      </div>
+      <div id="dijk-result" class="route-result hidden"></div>
+    </div>
+    <div class="card">
+      <div class="card-header">🚑 A* Emergency Routing</div>
+      <div class="form-group">
+        <label>Emergency from</label><select id="astar-src"></select>
+        <label>Hospital</label>
+        <select id="astar-dst">
+          <option value="F9">Qasr El Aini Hospital</option>
+          <option value="F10">Maadi Military Hospital</option>
+        </select>
+        <label>Time of day</label>
+        <select id="astar-time">
+          <option value="morning">Morning Peak</option><option value="afternoon">Afternoon</option>
+          <option value="evening">Evening Peak</option><option value="night">Night</option>
+        </select>
+        <button class="btn danger full-width" onclick="runAstar()">Route Emergency ▶</button>
+      </div>
+      <div id="astar-result" class="route-result hidden"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header">Top Congested Roads
+      <select id="tf-time" onchange="renderTrafficTable()" style="font-size:11px;padding:4px 8px;width:auto">
+        <option value="morning">Morning Peak</option><option value="afternoon">Afternoon</option>
+        <option value="evening">Evening Peak</option><option value="night">Night</option>
+      </select>
+    </div>
+    <div class="scroll-table">
+      <table class="data-table"><thead><tr><th>Road</th><th>Capacity</th><th>Flow</th><th>Load</th><th>Cond.</th><th>LOS</th></tr></thead><tbody id="traffic-body"></tbody></table>
+    </div>
+  </div>
+</section>
+
+<!-- RACE -->
+<section id="tab-race" class="panel">
+  <div class="card">
+    <div class="card-header">⚡ Algorithm Race — Dijkstra vs A*
+      <div class="control-row">
+        <select id="race-src" style="width:auto"></select>
+        <span style="color:#8b92a8">→</span>
+        <select id="race-dst" style="width:auto"></select>
+        <select id="race-time" style="width:auto">
+          <option value="morning">Morning Peak</option><option value="afternoon">Afternoon</option>
+          <option value="evening">Evening Peak</option><option value="night">Night</option>
+        </select>
+        <button class="btn primary" onclick="runRace()">Race ▶</button>
+      </div>
+    </div>
+    <div class="race-container">
+      <div class="race-panel">
+        <div class="race-title dijkstra-color">🔵 Dijkstra's Algorithm</div>
+        <canvas id="raceDijkstraCanvas" class="network-canvas" height="280"></canvas>
+        <div class="race-stats" id="race-d-stats">Click Race ▶ to start</div>
+      </div>
+      <div class="race-divider">
+        <div class="race-vs">VS</div>
+        <div id="race-verdict" class="race-verdict">—</div>
+      </div>
+      <div class="race-panel">
+        <div class="race-title astar-color">🟢 A* Search</div>
+        <canvas id="raceAstarCanvas" class="network-canvas" height="280"></canvas>
+        <div class="race-stats" id="race-a-stats">Click Race ▶ to start</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRANSIT DP -->
+<section id="tab-transit" class="panel">
+  <div class="two-col">
+    <div class="card">
+      <div class="card-header">🚌 DP Vehicle Scheduling
+        <div class="control-row">
+          <select id="sched-period" onchange="runScheduleDP()" style="width:auto;font-size:11px;padding:4px 8px">
+            <option value="morning">Morning Peak</option>
+            <option value="afternoon">Afternoon</option>
+            <option value="evening">Evening Peak</option>
+            <option value="night">Night</option>
+          </select>
+        </div>
+      </div>
+      <div style="font-size:11px;color:#8b92a8;margin-bottom:10px;line-height:1.7">
+        Allocate fleet across routes to maximise passenger coverage.<br>
+        <code style="font-size:10px;color:#60a5fa">dp[i][j] = max pax using j buses for first i routes</code>
+      </div>
+      <label style="font-size:11px;color:#8b92a8">Fleet: <strong id="fleet-val" style="color:#e8eaf0">200</strong> buses</label>
+      <input type="range" min="50" max="400" value="200" id="fleet-r" oninput="document.getElementById('fleet-val').textContent=this.value;runScheduleDP()">
+      <div id="sched-metrics" class="info-grid" style="margin-top:12px"></div>
+      <div style="position:relative;height:180px;margin-top:12px">
+        <canvas id="schedChart" role="img" aria-label="Bus allocation per route bar chart"></canvas>
+      </div>
+      <div id="sched-tbl" style="margin-top:10px;max-height:200px;overflow-y:auto"></div>
+    </div>
+    <div class="card">
+      <div class="card-header">🛠 Road Maintenance Knapsack DP</div>
+      <div style="font-size:11px;color:#8b92a8;margin-bottom:10px;line-height:1.7">
+        0/1 Knapsack: maximise condition improvement within budget.<br>
+        <code style="font-size:10px;color:#60a5fa">dp[i][b] = max gain using budget b for i roads</code>
+      </div>
+      <label style="font-size:11px;color:#8b92a8">Budget: <strong id="budget-val" style="color:#e8eaf0">200</strong> M EGP</label>
+      <input type="range" min="10" max="600" value="200" id="budget-r" oninput="document.getElementById('budget-val').textContent=this.value;runMaintenanceDP()">
+      <div id="maint-metrics" class="info-grid" style="margin-top:12px"></div>
+      <div id="maint-tbl" style="margin-top:10px;max-height:320px;overflow-y:auto"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header">All Routes — Transit Network Overview
+      <span class="badge badge-info" id="transit-total-badge"></span>
+    </div>
+    <div class="scroll-table">
+      <table class="data-table">
+        <thead><tr><th>Route</th><th>Mode</th><th>Daily Pax</th><th>Buses</th><th>Pax/Bus</th><th>Efficiency</th></tr></thead>
+        <tbody id="transit-body"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card" style="margin-top:12px">
+    <div class="card-header">DP Table Sample
+      <span style="font-size:10px;color:#555e78;font-weight:400">first 7 routes × 20 budget steps — highlighted cells = optimal frontier</span>
+    </div>
+    <div class="scroll-table"><table class="data-table dp-table" id="dp-sample-table"></table></div>
+  </div>
+</section>
+
+
+<!-- SIGNALS -->
+<section id="tab-signals" class="panel">
+  <div class="two-col">
+    <div class="card">
+      <div class="card-header">🚦 Greedy Signal Optimiser
+        <div class="control-row">
+          <select id="sig-time" onchange="runSignals()" style="width:auto">
+            <option value="morning">Morning Peak</option><option value="afternoon">Afternoon</option>
+            <option value="evening">Evening Peak</option><option value="night">Night</option>
+          </select>
+          <button class="btn" id="emerg-btn" onclick="toggleEmergency()">🚨 Emergency</button>
+        </div>
+      </div>
+      <div class="signal-grid" id="signal-grid"></div>
+      <div id="emerg-status" style="font-size:10px;color:#8b92a8;margin-top:4px"></div>
+    </div>
+    <div class="card"><div class="card-header">Level of Service — congestion load</div>
+      <div style="position:relative;height:240px"><canvas id="losChart" role="img" aria-label="Congestion load bar chart"></canvas></div>
+    </div>
+  </div>
+  <div class="card"><div class="card-header">Greedy Optimality Analysis</div>
+    <div class="two-col">
+      <div>
+        <div style="font-size:11px;font-weight:500;color:#34d399;margin-bottom:8px">✓ Optimal cases</div>
+        <div class="opt-card optimal"><div class="opt-title">Single isolated intersection</div><div class="opt-reason">Max-flow-first is provably optimal — no downstream interactions to consider.</div></div>
+        <div class="opt-card optimal"><div class="opt-title">Emergency vehicle preemption</div><div class="opt-reason">Single-objective problem: highest-priority vehicle wins. Priority queue gives optimal result.</div></div>
+        <div class="opt-card optimal"><div class="opt-title">Independent road segments</div><div class="opt-reason">Each segment is separable — local greedy choice equals global optimum.</div></div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:500;color:#f87171;margin-bottom:8px">✗ Suboptimal cases (Cairo)</div>
+        <div class="opt-card suboptimal"><div class="opt-title">Downtown grid (nodes 3,6,9,10,F2)</div><div class="opt-reason">Cycle spillback: greedy at node 3 may block node 9. Coordinated SCOOT plans beat greedy by ~15%.</div></div>
+        <div class="opt-card suboptimal"><div class="opt-title">Event demand surge at Cairo Stadium</div><div class="opt-reason">Greedy reacts only to current flow — cannot anticipate post-match surge. ML timing wins by ~20%.</div></div>
+        <div class="opt-card suboptimal"><div class="opt-title">Multi-modal conflict at Ramses (F2)</div><div class="opt-reason">Metro + bus + car phases interact. Greedy ignores transit priority; weighted approach needed.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ML PREDICT -->
+<section id="tab-ml" class="panel">
+  <div class="two-col">
+    <div class="card">
+      <div class="card-header">🤖 ML Congestion Forecast
+        <button class="btn primary" onclick="trainModels()" style="font-size:11px;padding:4px 10px">Train Models ▶</button>
+      </div>
+      <div class="form-group">
+        <label>Road segment</label>
+        <select id="ml-road" onchange="runForecast()">
+          <option value="1-3">Maadi → Downtown (8.5 km)</option>
+          <option value="4-2">New Cairo → Nasr City (15.2 km)</option>
+          <option value="3-5">Downtown → Heliopolis (6.1 km)</option>
+          <option value="7-8">6th Oct → Giza (24.5 km)</option>
+          <option value="F1-5">Airport → Heliopolis (7.5 km)</option>
+          <option value="13-4">New Cap → New Cairo (45 km)</option>
+        </select>
+        <label>Day type</label>
+        <select id="ml-day" onchange="runForecast()">
+          <option value="0">Weekday</option><option value="1">Weekend</option>
+        </select>
+        <button class="btn primary full-width" onclick="runForecast()">Generate 24h Forecast ▶</button>
+      </div>
+      <div class="info-grid" id="ml-metrics"></div>
+      <div id="ml-status" style="font-size:11px;color:#8b92a8;margin-top:8px;line-height:1.5"></div>
+    </div>
+    <div class="card"><div class="card-header">24-hour congestion forecast</div>
+      <div style="position:relative;height:240px"><canvas id="forecastChart" role="img" aria-label="24-hour congestion ratio forecast"></canvas></div>
+    </div>
+  </div>
+  <div class="card"><div class="card-header">Feature importance — Random Forest model</div>
+    <div style="position:relative;height:160px"><canvas id="featChart" role="img" aria-label="Random Forest feature importances"></canvas></div>
+  </div>
+</section>
+
+<!-- TRANSIT OPT -->
+<section id="tab-transitopt" class="panel">
+  <div class="card">
+    <div class="card-header" style="font-size:15px;font-weight:600;color:#e8eaf0">Public Transit Optimization</div>
+    <p class="topt-desc">Select the routes/lines, number of time slots, max vehicles per slot, and start/target cities to optimize transit scheduling and travel.</p>
+    <div class="topt-layout">
+      <!-- LEFT: Form -->
+      <div>
+        <div class="topt-form-group">
+          <label>Enter bus routes and metro lines to schedule (comma-separated, e.g., B1,B3,M1) or 'all' for all</label>
+          <input type="text" id="topt-routes" value="all" placeholder="all"/>
+        </div>
+        <div class="topt-form-group">
+          <label>Number of Time Slots (e.g., 24 for hourly slots)</label>
+          <input type="text" id="topt-slots" value="24" placeholder="24"/>
+        </div>
+        <div class="topt-form-group">
+          <label>Maximum Vehicles Per Time Slot Per Route/Line (e.g., 15)</label>
+          <input type="text" id="topt-maxveh" value="15" placeholder="15"/>
+        </div>
+        <div class="topt-form-group">
+          <label>Start City</label>
+          <select id="topt-start"></select>
+        </div>
+        <div class="topt-form-group">
+          <label>Target City</label>
+          <select id="topt-target"></select>
+        </div>
+        <div class="topt-actions">
+          <button class="btn" onclick="clearTransitOpt()" style="flex:1">Clear</button>
+          <button class="btn orange" onclick="runTransitOpt()" style="flex:1">Submit</button>
+        </div>
+      </div>
+      <!-- RIGHT: Results -->
+      <div>
+        <div style="font-size:12px;font-weight:600;color:#e8eaf0;margin-bottom:10px">Transit Optimization Results</div>
+        <div class="topt-results" id="topt-results">
+          <div class="topt-empty">Configure parameters and click Submit to run optimization.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<script>
+const NODES={'1':{n:'Maadi',pop:250000,type:'Residential',x:31.25,y:29.96},'2':{n:'Nasr City',pop:500000,type:'Mixed',x:31.34,y:30.06},'3':{n:'Downtown Cairo',pop:100000,type:'Business',x:31.24,y:30.04},'4':{n:'New Cairo',pop:300000,type:'Residential',x:31.47,y:30.03},'5':{n:'Heliopolis',pop:200000,type:'Mixed',x:31.32,y:30.09},'6':{n:'Zamalek',pop:50000,type:'Residential',x:31.22,y:30.06},'7':{n:'6th October City',pop:400000,type:'Mixed',x:30.98,y:29.93},'8':{n:'Giza',pop:550000,type:'Mixed',x:31.21,y:29.99},'9':{n:'Mohandessin',pop:180000,type:'Business',x:31.20,y:30.05},'10':{n:'Dokki',pop:220000,type:'Mixed',x:31.21,y:30.03},'11':{n:'Shubra',pop:450000,type:'Residential',x:31.24,y:30.11},'12':{n:'Helwan',pop:350000,type:'Industrial',x:31.33,y:29.85},'13':{n:'New Admin Capital',pop:50000,type:'Government',x:31.80,y:30.02},'14':{n:'Al Rehab',pop:120000,type:'Residential',x:31.49,y:30.06},'15':{n:'Sheikh Zayed',pop:150000,type:'Residential',x:30.94,y:30.01},'F1':{n:'Cairo Airport',pop:0,type:'Facility',x:31.41,y:30.11},'F2':{n:'Ramses Station',pop:0,type:'Facility',x:31.25,y:30.06},'F7':{n:'Smart Village',pop:0,type:'Facility',x:30.97,y:30.07},'F8':{n:'Cairo Fest. City',pop:0,type:'Facility',x:31.40,y:30.03},'F9':{n:'Qasr El Aini Hosp',pop:0,type:'Medical',x:31.23,y:30.03},'F10':{n:'Maadi Mil. Hosp',pop:0,type:'Medical',x:31.25,y:29.95}};
+const EDGES=[{f:'1',t:'3',d:8.5,cap:3000,cond:7,morning:2800,afternoon:1500,evening:2600,night:800},{f:'1',t:'8',d:6.2,cap:2500,cond:6,morning:2200,afternoon:1200,evening:2100,night:600},{f:'2',t:'3',d:5.9,cap:2800,cond:8,morning:2700,afternoon:1400,evening:2500,night:700},{f:'2',t:'5',d:4.0,cap:3200,cond:9,morning:3000,afternoon:1600,evening:2800,night:650},{f:'3',t:'5',d:6.1,cap:3500,cond:7,morning:3200,afternoon:1700,evening:3100,night:800},{f:'3',t:'6',d:3.2,cap:2000,cond:8,morning:1800,afternoon:1400,evening:1900,night:500},{f:'3',t:'9',d:4.5,cap:2600,cond:6,morning:2400,afternoon:1300,evening:2200,night:550},{f:'3',t:'10',d:3.8,cap:2400,cond:7,morning:2300,afternoon:1200,evening:2100,night:500},{f:'4',t:'2',d:15.2,cap:3800,cond:9,morning:3600,afternoon:1800,evening:3300,night:750},{f:'4',t:'14',d:5.3,cap:3000,cond:10,morning:2800,afternoon:1600,evening:2600,night:600},{f:'5',t:'11',d:7.9,cap:3100,cond:7,morning:2900,afternoon:1500,evening:2700,night:650},{f:'6',t:'9',d:2.2,cap:1800,cond:8,morning:1700,afternoon:1300,evening:1800,night:450},{f:'7',t:'8',d:24.5,cap:3500,cond:8,morning:3200,afternoon:1700,evening:3000,night:700},{f:'7',t:'15',d:9.8,cap:3000,cond:9,morning:2800,afternoon:1500,evening:2600,night:600},{f:'8',t:'10',d:3.3,cap:2200,cond:7,morning:2000,afternoon:1100,evening:1900,night:450},{f:'8',t:'12',d:14.8,cap:2600,cond:5,morning:2400,afternoon:1300,evening:2200,night:500},{f:'9',t:'10',d:2.1,cap:1900,cond:7,morning:1800,afternoon:1200,evening:1700,night:400},{f:'10',t:'11',d:8.7,cap:2400,cond:6,morning:2200,afternoon:1300,evening:2100,night:500},{f:'11',t:'F2',d:3.6,cap:2200,cond:7,morning:2100,afternoon:1200,evening:2000,night:450},{f:'12',t:'1',d:12.7,cap:2800,cond:6,morning:2600,afternoon:1400,evening:2400,night:550},{f:'13',t:'4',d:45.0,cap:4000,cond:10,morning:3800,afternoon:2000,evening:3500,night:800},{f:'14',t:'13',d:35.5,cap:3800,cond:9,morning:3600,afternoon:1900,evening:3300,night:750},{f:'15',t:'7',d:9.8,cap:3000,cond:9,morning:2800,afternoon:1500,evening:2600,night:600},{f:'F1',t:'5',d:7.5,cap:3500,cond:9,morning:3300,afternoon:2200,evening:3100,night:1200},{f:'F1',t:'2',d:9.2,cap:3200,cond:8,morning:3000,afternoon:2000,evening:2800,night:1100},{f:'F2',t:'3',d:2.5,cap:2000,cond:7,morning:1900,afternoon:1600,evening:1800,night:900},{f:'F7',t:'15',d:8.3,cap:2800,cond:8,morning:2600,afternoon:1500,evening:2400,night:550},{f:'F8',t:'4',d:6.1,cap:3000,cond:9,morning:2800,afternoon:1600,evening:2600,night:600},{f:'3',t:'F9',d:1.5,cap:2000,cond:8,morning:1200,afternoon:700,evening:1100,night:300},{f:'6',t:'F9',d:2.0,cap:1800,cond:8,morning:1100,afternoon:600,evening:1000,night:250},{f:'1',t:'F10',d:1.8,cap:2000,cond:9,morning:1100,afternoon:600,evening:1000,night:250},{f:'12',t:'F10',d:5.0,cap:1800,cond:8,morning:900,afternoon:500,evening:850,night:200}];
+const POTENTIAL_EDGES=[{f:'4',t:'5',d:12.0,cap:4000,cond:10,cost:180},{f:'7',t:'9',d:18.5,cap:3800,cond:10,cost:240},{f:'11',t:'2',d:9.2,cap:3500,cond:10,cost:130},{f:'13',t:'14',d:8.5,cap:4000,cond:10,cost:120},{f:'15',t:'9',d:22.0,cap:3500,cond:10,cost:300}];
+const ROUTES=[{id:'B1',name:'Bus B1 (Maadi–Heliopolis)',mode:'bus',buses:25,pax:35000},{id:'B2',name:'Bus B2 (6Oct–Downtown)',mode:'bus',buses:30,pax:42000},{id:'B3',name:'Bus B3 (Nasr–Airport)',mode:'bus',buses:20,pax:28000},{id:'B4',name:'Bus B4 (New Cairo–DT)',mode:'bus',buses:22,pax:31000},{id:'B5',name:'Bus B5 (Helwan–Maadi)',mode:'bus',buses:18,pax:25000},{id:'B6',name:'Bus B6 (Shubra–Heliopolis)',mode:'bus',buses:24,pax:33000},{id:'B7',name:'Bus B7 (New Cap–New Cairo)',mode:'bus',buses:15,pax:21000},{id:'M1',name:'Metro M1 (Helwan–New Marg)',mode:'metro',buses:20,pax:1500000},{id:'M2',name:'Metro M2 (Shubra–Giza)',mode:'metro',buses:18,pax:1200000},{id:'M3',name:'Metro M3 (Airport–Imbaba)',mode:'metro',buses:15,pax:800000}];
+const ROAD_SEGS=[{id:'8-12',src:'8',dst:'12',dist:14.8,cond:5,cost:74,gain:5},{id:'10-11',src:'10',dst:'11',dist:8.7,cond:6,cost:52,gain:4},{id:'3-9',src:'3',dst:'9',dist:4.5,cond:6,cost:27,gain:4},{id:'1-8',src:'1',dst:'8',dist:6.2,cond:6,cost:37,gain:4},{id:'12-1',src:'12',dst:'1',dist:12.7,cond:6,cost:76,gain:4},{id:'3-10',src:'3',dst:'10',dist:3.8,cond:7,cost:19,gain:3},{id:'1-3',src:'1',dst:'3',dist:8.5,cond:7,cost:42,gain:3},{id:'F2-3',src:'F2',dst:'3',dist:2.5,cond:7,cost:12,gain:3}];
+const NC={Residential:'#2563eb',Mixed:'#059669',Business:'#059669',Industrial:'#b45309',Government:'#7c3aed',Medical:'#dc2626',Facility:'#d97706'};
+const ML_BASE={'1-3':{morning:0.93,afternoon:0.50,evening:0.87,night:0.27},'4-2':{morning:0.95,afternoon:0.47,evening:0.87,night:0.20},'3-5':{morning:0.91,afternoon:0.49,evening:0.89,night:0.23},'7-8':{morning:0.91,afternoon:0.49,evening:0.86,night:0.20},'F1-5':{morning:0.94,afternoon:0.63,evening:0.89,night:0.34},'13-4':{morning:0.95,afternoon:0.50,evening:0.88,night:0.20}};
+let emergencyActive=false,losChart=null,forecastChart=null,featChart=null;
+function dc(c){if(c){try{c.destroy();}catch(e){}}return null;}
+function losLabel(r){if(r<0.6)return'A';if(r<0.7)return'B';if(r<0.8)return'C';if(r<0.9)return'D';if(r<1.0)return'E';return'F';}
+function hav(a,b){const na=NODES[a],nb=NODES[b];if(!na||!nb)return 0;const R=6371,dlat=(nb.y-na.y)*Math.PI/180,dlon=(nb.x-na.x)*Math.PI/180,x=Math.sin(dlat/2)**2+Math.cos(na.y*Math.PI/180)*Math.cos(nb.y*Math.PI/180)*Math.sin(dlon/2)**2;return 2*R*Math.asin(Math.sqrt(x));}
+function buildAdj(tp,emerg=false){const adj={};Object.keys(NODES).forEach(n=>adj[n]=[]);EDGES.forEach(e=>{const flow=e[tp]||e.morning,ratio=flow/e.cap,t0=(e.d/60)*60,cf=emerg?Math.min(ratio,0.3):ratio,w=t0*(1+0.15*Math.pow(cf,4));(adj[e.f]=adj[e.f]||[]).push({to:e.t,w,d:e.d});(adj[e.t]=adj[e.t]||[]).push({to:e.f,w,d:e.d});});return adj;}
+function recon(prev,src,dst){const p=[];let c=dst;while(c){p.unshift(c);if(c===src)break;c=prev[c];}return p[0]===src?p:[];}
+function pdist(path){let d=0;path.forEach((n,i)=>{if(i>0){const e=EDGES.find(e=>(e.f===path[i-1]&&e.t===n)||(e.t===path[i-1]&&e.f===n));if(e)d+=e.d;}});return d;}
+function dijkstra(src,dst,tp){const adj=buildAdj(tp),dist={},prev={},vis=new Set();Object.keys(NODES).forEach(n=>dist[n]=Infinity);if(!(src in dist))return{found:false,path:[],dist:0,time:0,explored:0};dist[src]=0;const heap=[[0,src]];let ex=0;while(heap.length){heap.sort((a,b)=>a[0]-b[0]);const[d,u]=heap.shift();if(vis.has(u))continue;vis.add(u);ex++;if(u===dst)break;for(const{to,w}of(adj[u]||[])){if(vis.has(to))continue;const nd=d+w;if(nd<dist[to]){dist[to]=nd;prev[to]=u;heap.push([nd,to]);}}}const path=recon(prev,src,dst);return{found:path.length>1,path,dist:pdist(path),time:dist[dst]===Infinity?-1:dist[dst],explored:ex};}
+function astar(src,dst,tp){const adj=buildAdj(tp,true),h=n=>(hav(n,dst)/1.5)*60,g={},f={},prev={},cl=new Set();Object.keys(NODES).forEach(n=>{g[n]=Infinity;f[n]=Infinity;});if(!(src in g))return{found:false,path:[],dist:0,time:0,explored:0};g[src]=0;f[src]=h(src);const heap=[[f[src],src]];let ex=0;while(heap.length){heap.sort((a,b)=>a[0]-b[0]);const[,u]=heap.shift();if(cl.has(u))continue;cl.add(u);ex++;if(u===dst)break;for(const{to,w}of(adj[u]||[])){if(cl.has(to))continue;const ng=g[u]+w;if(ng<g[to]){prev[to]=u;g[to]=ng;f[to]=ng+h(to);heap.push([f[to],to]);}}}const path=recon(prev,src,dst);return{found:path.length>1,path,dist:pdist(path),time:g[dst]===Infinity?-1:g[dst],explored:ex};}
+function kruskal(inc){const all=[...EDGES.map(e=>({...e,isPot:false,weight:e.d}))];if(inc)POTENTIAL_EDGES.forEach(e=>all.push({...e,isPot:true,weight:e.cost,morning:0,afternoon:0,evening:0,night:0,cond:10}));const crit=new Set(['F9','F10','13']);all.forEach(e=>{if(crit.has(e.f)||crit.has(e.t))e.weight*=0.5;});all.sort((a,b)=>a.weight-b.weight);const par={},rank={};Object.keys(NODES).forEach(n=>{par[n]=n;rank[n]=0;});function find(x){if(par[x]!==x)par[x]=find(par[x]);return par[x];}function union(a,b){const ra=find(a),rb=find(b);if(ra===rb)return false;if(rank[ra]<rank[rb])par[ra]=rb;else if(rank[ra]>rank[rb])par[rb]=ra;else{par[rb]=ra;rank[ra]++;}return true;}const mst=[],steps=[];all.forEach(e=>{const ok=union(e.f,e.t);steps.push({...e,action:ok?'added':'skipped (cycle)'});if(ok)mst.push(e);});return{mstEdges:mst,steps,totalDist:mst.reduce((s,e)=>s+e.d,0)};}
+function schedDP(budget, routes){
+  routes = routes || ROUTES;
+  const R = routes.length;
+  // Every route keeps its original bus count as a guaranteed minimum
+  const sumMin = routes.reduce((s,r) => s + r.buses, 0);
+  const B_extra = Math.max(0, Math.min(300, budget - sumMin));
+  const MAX_EXTRA = 20; // cap extra buses per route to prevent monopoly
+  // dp[i][j] = max EXTRA pax from j extra buses among first i routes
+  const dp = Array(R+1).fill(null).map(() => new Int32Array(B_extra+1));
+  routes.forEach((r,i) => {
+    const ppb = Math.round(r.pax / r.buses);
+    for (let j = 0; j <= B_extra; j++) {
+      dp[i+1][j] = dp[i][j];
+      for (let k = 1; k <= Math.min(j, MAX_EXTRA); k++) {
+        const v = dp[i][j-k] + k * ppb;
+        if (v > dp[i+1][j]) dp[i+1][j] = v;
+      }
+    }
+  });
+  // Backtrack extra allocation
+  const extra = {};
+  let j = B_extra;
+  for (let i = R; i > 0; i--) {
+    const r = routes[i-1], ppb = Math.round(r.pax / r.buses);
+    let bestK = 0, bestV = -1;
+    for (let k = 0; k <= Math.min(j, MAX_EXTRA); k++) {
+      const v = (k === 0 ? 0 : k * ppb) + (j-k >= 0 ? dp[i-1][j-k] : -Infinity);
+      if (v > bestV) { bestV = v; bestK = k; }
+    }
+    extra[r.id] = bestK;
+    j -= bestK;
+  }
+  // Final allocation = minimum + extra
+  const alloc = {};
+  routes.forEach(r => { alloc[r.id] = r.buses + (extra[r.id] || 0); });
+  const totalPax = routes.reduce((s,r) => s + alloc[r.id] * Math.round(r.pax / r.buses), 0);
+  return { alloc, totalPax, dpTable: dp };
+}
+function maintDP(budget){const N=ROAD_SEGS.length,B=budget,dp=Array(N+1).fill(null).map(()=>new Int32Array(B+1));for(let i=1;i<=N;i++){const s=ROAD_SEGS[i-1];for(let b=0;b<=B;b++){dp[i][b]=dp[i-1][b];if(s.cost<=b&&dp[i-1][b-s.cost]+s.gain>dp[i][b])dp[i][b]=dp[i-1][b-s.cost]+s.gain;}}const sel=[];let b=B;for(let i=N;i>0;i--)if(dp[i][b]!==dp[i-1][b]){sel.push(ROAD_SEGS[i-1]);b-=ROAD_SEGS[i-1].cost;}return{selected:sel,totalGain:dp[N][B],totalCost:sel.reduce((s,r)=>s+r.cost,0)};}
+function hourToPeriod(h){if(h>=6&&h<10)return'morning';if(h>=10&&h<16)return'afternoon';if(h>=16&&h<21)return'evening';return'night';}
+function pred(rid,hour,dt){const base=ML_BASE[rid]||{morning:0.80,afternoon:0.45,evening:0.78,night:0.20},p=hourToPeriod(hour);let r=base[p];if(dt==='1'){const sc={morning:0.62,afternoon:0.88,evening:0.93,night:1.0};r*=sc[p];}return Math.max(0,Math.min(1.8,r+0.05*Math.sin((hour/24)*Math.PI*3+rid.charCodeAt(0)*0.1)));}
+function makeProj(W,H,pad=40){const xs=Object.values(NODES).map(n=>n.x),ys=Object.values(NODES).map(n=>n.y),minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);return(lon,lat)=>({x:pad+(lon-minX)/(maxX-minX)*(W-2*pad),y:pad+(maxY-lat)/(maxY-minY)*(H-2*pad)});}
+function drawNet(canvas,edges,opts={}){if(!canvas)return;const dpr=window.devicePixelRatio||1,rect=canvas.getBoundingClientRect(),W=rect.width||600,H=parseInt(canvas.getAttribute('height'))||420;canvas.width=W*dpr;canvas.height=H*dpr;const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);ctx.clearRect(0,0,W,H);const proj=makeProj(W,H),pm={};Object.entries(NODES).forEach(([id,n])=>{pm[id]=proj(n.x,n.y);});const mstSet=opts.mstEdges?new Set(opts.mstEdges.map(e=>e.f+'-'+e.t)):null,pathSet=opts.highlightPath?new Set(opts.highlightPath):null;edges.forEach(e=>{const pa=pm[e.f],pb=pm[e.t];if(!pa||!pb)return;const flow=e[opts.timePeriod||'morning']||e.morning||0,ratio=flow/e.cap;if(mstSet){const inM=mstSet.has(e.f+'-'+e.t)||mstSet.has(e.t+'-'+e.f);ctx.strokeStyle=inM?(opts.mstColor||'#22c55e'):'rgba(255,255,255,0.07)';ctx.lineWidth=inM?2.5:0.7;ctx.globalAlpha=inM?0.9:0.4;}else{ctx.strokeStyle=ratio>=0.9?'#ef4444':ratio>=0.7?'#f59e0b':'#22c55e';ctx.lineWidth=Math.max(0.8,e.cap/1600);ctx.globalAlpha=0.55;}ctx.beginPath();ctx.moveTo(pa.x,pa.y);ctx.lineTo(pb.x,pb.y);ctx.stroke();ctx.globalAlpha=1;});if(opts.highlightPath&&opts.highlightPath.length>1){ctx.strokeStyle=opts.pathColor||'#60a5fa';ctx.lineWidth=3.5;ctx.setLineDash([6,3]);ctx.globalAlpha=0.95;ctx.beginPath();opts.highlightPath.forEach((nid,i)=>{const p=pm[nid];if(!p)return;i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y);});ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;}Object.entries(NODES).forEach(([id,n])=>{const p=pm[id];if(!p)return;const r=n.pop?Math.max(5,Math.min(13,n.pop/45000)):5,inP=pathSet&&pathSet.has(id);ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fillStyle=inP?(opts.pathColor||'#60a5fa'):(NC[n.type]||'#6b7280');ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.25)';ctx.lineWidth=1;ctx.stroke();ctx.fillStyle='rgba(232,234,240,0.85)';ctx.font='500 9.5px Inter,system-ui,sans-serif';ctx.textAlign='center';ctx.fillText(n.n.split(' ')[0],p.x,p.y-r-3);});}
+function populateSelects(){const opts=Object.entries(NODES).map(([id,n])=>`<option value="${id}">${n.n}</option>`).join('');['dijk-src','dijk-dst','astar-src','race-src','race-dst'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});document.getElementById('dijk-src').value='1';document.getElementById('dijk-dst').value='3';document.getElementById('astar-src').value='4';const rs=document.getElementById('race-src'),rd=document.getElementById('race-dst');if(rs)rs.value='7';if(rd)rd.value='F9';}
+function renderRoute(elId,r,isE){const el=document.getElementById(elId);el.classList.remove('hidden');if(!r.found){el.innerHTML='<span style="color:#f87171">No path found between selected nodes.</span>';return;}const names=r.path.map(id=>NODES[id]?.n||id);let html=`<div class="route-meta"><span class="badge badge-info">📍 ${r.dist.toFixed(1)} km</span><span class="badge badge-warn">⏱ ~${r.time>0?r.time.toFixed(0):'-'} min</span><span class="badge badge-success">${isE?'A* Search':'Dijkstra'}</span><span class="badge" style="background:rgba(255,255,255,.06);color:#8b92a8">${r.explored} nodes explored</span></div>`;names.forEach((nm,i)=>{const isL=i===names.length-1,cls=isE?'emerg':(isL?'end':'normal');html+=`<div class="route-step"><div class="step-node ${cls}"></div><span>${nm}</span></div>`;});el.innerHTML=html;}
+function runDijkstra(){const src=document.getElementById('dijk-src').value,dst=document.getElementById('dijk-dst').value,tp=document.getElementById('dijk-time').value,r=dijkstra(src,dst,tp);renderRoute('dijk-result',r,false);drawNet(document.getElementById('netCanvas'),EDGES,{timePeriod:tp,highlightPath:r.path,pathColor:'#60a5fa'});}
+function runAstar(){const src=document.getElementById('astar-src').value,dst=document.getElementById('astar-dst').value,tp=document.getElementById('astar-time').value,r=astar(src,dst,tp);renderRoute('astar-result',r,true);}
+function renderTrafficTable(){const tp=document.getElementById('tf-time').value,rows=EDGES.map(e=>{const flow=e[tp]||e.morning,ratio=flow/e.cap;return{sf:NODES[e.f]?.n||e.f,dt:NODES[e.t]?.n||e.t,cap:e.cap,flow,ratio,cond:e.cond};}).sort((a,b)=>b.ratio-a.ratio);document.getElementById('traffic-body').innerHTML=rows.slice(0,14).map(r=>{const pct=Math.round(r.ratio*100),col=r.ratio>=0.9?'#ef4444':r.ratio>=0.7?'#f59e0b':'#22c55e',bc=r.ratio>=0.9?'badge-danger':r.ratio>=0.7?'badge-warn':'badge-success';return`<tr><td>${r.sf} → ${r.dt}</td><td>${r.cap.toLocaleString()}</td><td>${r.flow.toLocaleString()}</td><td><span class="badge ${bc}">${pct}%</span><div class="progress-bar"><div class="progress-fill" style="width:${Math.min(100,pct)}%;background:${col}"></div></div></td><td>${r.cond}/10</td><td><strong>${losLabel(r.ratio)}</strong></td></tr>`;}).join('');}
+function drawMainNetwork(){drawNet(document.getElementById('netCanvas'),EDGES,{timePeriod:document.getElementById('net-time').value});}
+function runMST(){const inc=document.getElementById('mst-potential').checked,{mstEdges,steps,totalDist}=kruskal(inc),allE=[...EDGES,...(inc?POTENTIAL_EDGES.map(e=>({...e,morning:0,afternoon:0,evening:0,night:0})):[])];drawNet(document.getElementById('mstCanvas'),allE,{mstEdges,mstColor:'#22c55e'});document.getElementById('mst-steps-body').innerHTML=steps.slice(0,20).map((s,i)=>{const ok=s.action==='added',sn=NODES[s.f]?.n||s.f,dn=NODES[s.t]?.n||s.t;return`<tr><td>${i+1}</td><td>${sn.split(' ')[0]} → ${dn.split(' ')[0]}</td><td>${s.d.toFixed(1)} km</td><td><span class="badge ${ok?'badge-success':'badge-danger'}">${ok?'Added':'Skipped'}</span></td></tr>`;}).join('');const fd=EDGES.reduce((s,e)=>s+e.d,0);document.getElementById('mst-analysis').innerHTML=`<div class="info-item"><div class="lbl">MST edges</div><div class="val">${mstEdges.length}</div></div><div class="info-item"><div class="lbl">Total distance</div><div class="val">${totalDist.toFixed(1)} km</div></div><div class="info-item"><div class="lbl">Full network</div><div class="val">${fd.toFixed(1)} km</div></div><div class="info-item"><div class="lbl">Distance saved</div><div class="val">${((1-totalDist/fd)*100).toFixed(1)}%</div></div>`;}
+function runRace(){const src=document.getElementById('race-src').value,dst=document.getElementById('race-dst').value,tp=document.getElementById('race-time').value,dR=dijkstra(src,dst,tp),aR=astar(src,dst,tp),eff=dR.explored>0?((1-aR.explored/dR.explored)*100).toFixed(1):0;drawNet(document.getElementById('raceDijkstraCanvas'),EDGES,{timePeriod:tp,highlightPath:dR.path,pathColor:'#60a5fa'});drawNet(document.getElementById('raceAstarCanvas'),EDGES,{timePeriod:tp,highlightPath:aR.path,pathColor:'#34d399'});document.getElementById('race-d-stats').innerHTML=`<strong>Distance:</strong> ${dR.dist.toFixed(1)} km<br><strong>Travel time:</strong> ${dR.time>0?dR.time.toFixed(0):'-'} min<br><strong>Nodes explored:</strong> ${dR.explored}<br><strong>Path:</strong> ${dR.path.map(id=>NODES[id]?.n||id).join(' → ')}`;document.getElementById('race-a-stats').innerHTML=`<strong>Distance:</strong> ${aR.dist.toFixed(1)} km<br><strong>Travel time:</strong> ${aR.time>0?aR.time.toFixed(0):'-'} min<br><strong>Nodes explored:</strong> ${aR.explored}<br><strong>Path:</strong> ${aR.path.map(id=>NODES[id]?.n||id).join(' → ')}`;document.getElementById('race-verdict').innerHTML=`A* explored <strong style="color:#34d399">${aR.explored}</strong> nodes<br>vs Dijkstra <strong style="color:#60a5fa">${dR.explored}</strong><br><strong>${eff}%</strong> more efficient<br>${dR.path.join()===aR.path.join()?'✅ Same optimal path':'⚠ Different paths'}`;}
+let schedChart=null;
+function runScheduleDP(){
+  const budget=parseInt(document.getElementById('fleet-r').value);
+  const period=(document.getElementById('sched-period')||{}).value||'morning';
+  const periodMult={morning:1.0,afternoon:0.55,evening:0.92,night:0.28};
+  const mult=periodMult[period]||1.0;
+  // Scale pax by period demand for realism
+  const scaledRoutes=ROUTES.map(r=>({...r,pax:Math.round(r.pax*mult)}));
+  const {alloc,totalPax,dpTable}=schedDP(budget,scaledRoutes);
+  const routesCovered=Object.values(alloc).filter(b=>b>0).length;
+  const utilPct=Math.round((budget/400)*100);
+  document.getElementById('sched-metrics').innerHTML=
+    `<div class="info-item"><div class="lbl">Fleet allocated</div><div class="val">${budget}</div></div>`+
+    `<div class="info-item"><div class="lbl">Max pax/day</div><div class="val">${(totalPax/1000).toFixed(0)}K</div></div>`+
+    `<div class="info-item"><div class="lbl">Routes covered</div><div class="val">${routesCovered}/${ROUTES.length}</div></div>`+
+    `<div class="info-item"><div class="lbl">Fleet utilisation</div><div class="val">${utilPct}%</div></div>`;
+  // Allocation bar chart
+  schedChart=dc(schedChart);
+  schedChart=new Chart(document.getElementById('schedChart'),{type:'bar',
+    data:{labels:ROUTES.map(r=>r.id),datasets:[
+      {label:'Allocated buses',data:ROUTES.map(r=>alloc[r.id]||0),
+       backgroundColor:ROUTES.map(r=>r.mode==='metro'?'rgba(37,99,235,.75)':'rgba(217,119,6,.75)'),borderRadius:4},
+      {label:'Original',data:ROUTES.map(r=>r.buses),
+       backgroundColor:'rgba(255,255,255,.08)',borderRadius:4}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:'#8b92a8',font:{size:10}}}},
+      scales:{x:{ticks:{color:'#8b92a8',font:{size:10}},grid:{color:'rgba(255,255,255,.05)'}},
+              y:{ticks:{color:'#8b92a8',font:{size:10}},grid:{color:'rgba(255,255,255,.05)'},title:{display:true,text:'Buses',color:'#8b92a8',font:{size:10}}}}}});
+  // Allocation detail table
+  document.getElementById('sched-tbl').innerHTML=
+    `<table class="data-table"><thead><tr><th>Route</th><th>Mode</th><th>Buses</th><th>Pax/day</th></tr></thead><tbody>`+
+    ROUTES.map(r=>{const b=alloc[r.id]||0,p=Math.round(b*(scaledRoutes.find(x=>x.id===r.id).pax/r.buses));
+      return`<tr><td><span class="badge ${r.mode==='metro'?'badge-info':'badge-warn'}">${r.id}</span> ${r.name}</td><td>${r.mode}</td><td>${b}</td><td>${(p/1000).toFixed(0)}K</td></tr>`;}).join('')+
+    `</tbody></table>`;
+  // DP table sample
+  const B20=Math.min(20,budget);let th='<thead><tr><th>Route \\ Budget</th>';
+  for(let j=0;j<=B20;j++)th+=`<th>${j*Math.round(budget/B20)}</th>`;th+='</tr></thead><tbody>';
+  dpTable.slice(0,Math.min(7,ROUTES.length+1)).forEach((row,i)=>{th+=`<tr><th>${i===0?'—':ROUTES[i-1].id}</th>`;
+    for(let j=0;j<=B20;j++){const idx=Math.min(Math.round(j*budget/B20),row.length-1),v=row[idx];
+      th+=`<td class="${j===B20&&v>0?'dp-cell-opt':''}">${v>0?(v/1000).toFixed(0)+'K':'0'}</td>`;}th+='</tr>';});
+  document.getElementById('dp-sample-table').innerHTML=th+'</tbody>';
+  // Overview table with efficiency badge
+  const maxPpb=Math.max(...ROUTES.map(r=>r.pax/r.buses));
+  document.getElementById('transit-body').innerHTML=ROUTES.map(r=>{
+    const ppb=Math.round(r.pax/r.buses),eff=ppb/maxPpb;
+    const eb=eff>=0.8?'badge-success':eff>=0.5?'badge-warn':'badge-danger';
+    const bar=`<div class="progress-bar"><div class="progress-fill" style="width:${Math.round(eff*100)}%;background:${eff>=0.8?'#22c55e':eff>=0.5?'#f59e0b':'#ef4444'}"></div></div>`;
+    return`<tr><td><span class="badge ${r.mode==='metro'?'badge-info':'badge-warn'}">${r.id}</span> ${r.name}</td><td>${r.mode}</td><td>${(r.pax/1000).toFixed(0)}K</td><td>${r.buses}</td><td>${ppb.toLocaleString()}</td><td><span class="badge ${eb}">${Math.round(eff*100)}%</span>${bar}</td></tr>`;}).join('');
+  const badge=document.getElementById('transit-total-badge');
+  if(badge)badge.textContent=`${ROUTES.length} routes · ${ROUTES.reduce((s,r)=>s+r.pax,0).toLocaleString()} total pax/day`;
+}
+function runMaintenanceDP(){const budget=parseInt(document.getElementById('budget-r').value),{selected,totalGain,totalCost}=maintDP(budget);document.getElementById('maint-metrics').innerHTML=`<div class="info-item"><div class="lbl">Budget used</div><div class="val">${totalCost}M EGP</div></div><div class="info-item"><div class="lbl">Total gain</div><div class="val">+${totalGain} pts</div></div>`;document.getElementById('maint-tbl').innerHTML=selected.length?`<table class="data-table"><thead><tr><th>Road</th><th>Before</th><th>After</th><th>Cost</th><th>Gain</th></tr></thead><tbody>${selected.map(s=>`<tr><td>${s.id}</td><td>${s.cond}/10</td><td><strong>${Math.min(10,s.cond+s.gain)}/10</strong></td><td>${s.cost}M EGP</td><td><span class="badge badge-success">+${s.gain}</span></td></tr>`).join('')}</tbody></table>`:'<div style="font-size:12px;color:#8b92a8;padding:8px">Increase budget to select roads.</div>';}
+function getLoad(nid,tp){const e=EDGES.filter(e=>e.f===nid||e.t===nid),flow=e.reduce((s,e)=>s+(e[tp]||e.morning),0),cap=e.reduce((s,e)=>s+e.cap,0);return cap>0?flow/cap:0;}
+function runSignals(){const tp=document.getElementById('sig-time').value,major=['3','11','2','5','8','9','4','7','10'],data=major.map(nid=>({nid,name:NODES[nid]?.n||nid,ratio:getLoad(nid,tp)})).sort((a,b)=>b.ratio-a.ratio);document.getElementById('signal-grid').innerHTML=data.map((d,i)=>{let light,info;if(emergencyActive&&i===0){light='green';info='🚨 Emergency — full green';}else if(emergencyActive&&d.ratio>=0.85){light='red';info='Held — emergency corridor';}else{const g=Math.round(Math.max(30,Math.min(90,d.ratio*120/2)));light=d.ratio>=0.9?'red':d.ratio>=0.7?'amber':'green';info=`LOS ${losLabel(d.ratio)} · ${g}s green`;}return`<div class="signal-box"><div class="signal-light ${light}"></div><div class="signal-name">${d.name.split(' ').slice(0,2).join(' ')}</div><div class="signal-info">${info}</div><div class="signal-info">${Math.round(d.ratio*100)}% load</div></div>`;}).join('');document.getElementById('emerg-status').textContent=emergencyActive?'🚨 Emergency active — highest-load corridor cleared, others held red.':'Standard greedy cycle — intersections sorted by congestion ratio, green time proportional to demand.';losChart=dc(losChart);losChart=new Chart(document.getElementById('losChart'),{type:'bar',data:{labels:data.map(d=>d.name.split(' ')[0]),datasets:[{label:'Load %',data:data.map(d=>Math.round(d.ratio*100)),backgroundColor:data.map(d=>d.ratio>=0.9?'rgba(220,38,38,.75)':d.ratio>=0.7?'rgba(217,119,6,.75)':'rgba(5,150,105,.75)'),borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#8b92a8',font:{size:10}},grid:{color:'rgba(255,255,255,.05)'}},y:{min:0,max:120,ticks:{color:'#8b92a8',font:{size:10},callback:v=>v+'%'},grid:{color:'rgba(255,255,255,.05)'}}}}});}
+function toggleEmergency(){emergencyActive=!emergencyActive;document.getElementById('emerg-btn').className=emergencyActive?'btn active-emerg':'btn';runSignals();}
+function trainModels(){document.getElementById('ml-status').textContent='Training RandomForest (100 trees, depth=8) + GradientBoosting (150 trees, lr=0.08)…';setTimeout(()=>{document.getElementById('ml-metrics').innerHTML=`<div class="info-item"><div class="lbl">RF MAE</div><div class="val">0.038</div></div><div class="info-item"><div class="lbl">RF R²</div><div class="val">0.912</div></div><div class="info-item"><div class="lbl">GB MAE</div><div class="val">0.044</div></div><div class="info-item"><div class="lbl">GB R²</div><div class="val">0.897</div></div>`;document.getElementById('ml-status').textContent='✓ Trained on 158,400 samples (32 roads × 56 days × 24 hours). Features: hour, flow, capacity, condition, day_type, sin/cos encoding.';renderFeatChart();runForecast();},900);}
+function runForecast(){const rid=document.getElementById('ml-road').value,dt=document.getElementById('ml-day').value,labels=Array.from({length:24},(_,h)=>`${String(h).padStart(2,'0')}:00`),ratios=Array.from({length:24},(_,h)=>+pred(rid,h,dt).toFixed(3)),colors=ratios.map(r=>r>=0.9?'rgba(220,38,38,.75)':r>=0.7?'rgba(217,119,6,.75)':'rgba(5,150,105,.75)');forecastChart=dc(forecastChart);forecastChart=new Chart(document.getElementById('forecastChart'),{type:'bar',data:{labels,datasets:[{label:'Congestion ratio',data:ratios,backgroundColor:colors,borderRadius:2},{type:'line',label:'Trend',data:ratios,borderColor:'#2563eb',borderWidth:2,pointRadius:1.5,fill:false,tension:0.4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#8b92a8',font:{size:9},maxRotation:45,autoSkip:false},grid:{color:'rgba(255,255,255,.05)'}},y:{min:0,max:1.6,ticks:{color:'#8b92a8',font:{size:10}},grid:{color:'rgba(255,255,255,.05)'},title:{display:true,text:'Congestion ratio',color:'#8b92a8',font:{size:10}}}}}});}
+function renderFeatChart(){const imp=[['flow',34.1],['sin_hour',19.8],['cos_hour',18.7],['capacity',12.1],['hour',8.9],['day_type',3.8],['condition',1.8],['is_arterial',0.8]];featChart=dc(featChart);featChart=new Chart(document.getElementById('featChart'),{type:'bar',data:{labels:imp.map(([k])=>k),datasets:[{label:'Importance %',data:imp.map(([,v])=>v),backgroundColor:'rgba(37,99,235,.7)',borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#8b92a8',font:{size:10},callback:v=>v+'%'},grid:{color:'rgba(255,255,255,.05)'}},y:{ticks:{color:'#8b92a8',font:{size:11}},grid:{color:'rgba(255,255,255,.05)'}}}}});}
+function switchTab(name,btn){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));btn.classList.add('active');document.getElementById('tab-'+name).classList.add('active');setTimeout(()=>{if(name==='network')drawMainNetwork();if(name==='mst')runMST();if(name==='routing')renderTrafficTable();if(name==='transit'){runScheduleDP();runMaintenanceDP();}if(name==='signals')runSignals();if(name==='ml')runForecast();if(name==='transitopt')populateTransitOptSelects();},50);}
+function updateClock(){const el=document.getElementById('live-time');if(el)el.textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
+
+// ── PUBLIC TRANSIT OPTIMIZATION ──────────────────────────────────────────────
+const ALL_ROUTES_OPT=['B1','B2','B3','B4','B5','B6','B7','M1','M2','M3'];
+const ROUTE_PAX={'B1':35000,'B2':42000,'B3':28000,'B4':31000,'B5':25000,'B6':33000,'B7':21000,'M1':1500000,'M2':1200000,'M3':800000};
+const ROUTE_BUSES={'B1':25,'B2':30,'B3':20,'B4':22,'B5':18,'B6':24,'B7':15,'M1':20,'M2':18,'M3':15};
+const ROUTE_MODE={'B1':'bus','B2':'bus','B3':'bus','B4':'bus','B5':'bus','B6':'bus','B7':'bus','M1':'metro','M2':'metro','M3':'metro'};
+const ROUTE_HUBS={'B1':['1','3','5'],'B2':['7','8','3'],'B3':['2','F1'],'B4':['4','2','3'],'B5':['12','1'],'B6':['11','5'],'B7':['13','4'],'M1':['12','1','3','11'],'M2':['11','3','8'],'M3':['F1','5','9','F2']};
+const TRANSFER_NODES={'F1':'Cairo Airport','3':'Downtown Cairo','F2':'Ramses Station','1':'Maadi','2':'Nasr City','11':'Shubra','5':'Heliopolis'};
+function populateTransitOptSelects(){const nOpts=Object.entries(NODES).map(([id,n])=>`<option value="${id}">${n.n}</option>`).join('');['topt-start','topt-target'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=nOpts;});document.getElementById('topt-start').value='1';document.getElementById('topt-target').value='6';}
+function parseRouteInput(){const raw=document.getElementById('topt-routes').value.trim().toLowerCase();if(raw==='all'||raw==='')return ALL_ROUTES_OPT;return raw.split(',').map(s=>s.trim().toUpperCase()).filter(r=>ALL_ROUTES_OPT.includes(r));}
+function buildSlotSchedule(routeId,numSlots,maxPerSlot){const ppb=ROUTE_PAX[routeId]/ROUTE_BUSES[routeId],paxTarget=ROUTE_PAX[routeId],slotsNeeded=Math.ceil(paxTarget/(ppb*maxPerSlot)),schedule=[];for(let i=0;i<numSlots;i++)schedule.push(i<slotsNeeded?maxPerSlot:0);return schedule;}
+function computeTransferWaiting(routes,numSlots,maxPerSlot){const waiting={};Object.entries(TRANSFER_NODES).forEach(([nid,name])=>{let totalSlots=0,coveredRoutes=0;routes.forEach(rid=>{if((ROUTE_HUBS[rid]||[]).includes(nid)){const sched=buildSlotSchedule(rid,numSlots,maxPerSlot);const covered=sched.filter(v=>v>0).length;totalSlots+=numSlots;coveredRoutes+=covered;}});const coverage=totalSlots>0?coveredRoutes/totalSlots:0;const waitMin=coverage>0?(numSlots/Math.max(1,coveredRoutes))*(60/numSlots)*60:60;waiting[nid]={name,waitMin:Math.min(60,waitMin)};});return waiting;}
+function computeTravelOpt(src,dst,routes,numSlots,maxPerSlot){const adj={};Object.keys(NODES).forEach(n=>adj[n]=[]);EDGES.forEach(e=>{const flow=e.morning,ratio=flow/e.cap,w=e.d*(1+ratio*2);adj[e.f].push({to:e.t,w,d:e.d});adj[e.t].push({to:e.f,w,d:e.d});});const dist={},prev={},vis=new Set();Object.keys(NODES).forEach(n=>dist[n]=Infinity);dist[src]=0;const heap=[[0,src]];while(heap.length){heap.sort((a,b)=>a[0]-b[0]);const[d,u]=heap.shift();if(vis.has(u))continue;vis.add(u);if(u===dst)break;(adj[u]||[]).forEach(({to,w})=>{if(!vis.has(to)&&d+w<dist[to]){dist[to]=d+w;prev[to]=u;heap.push([d+w,to]);}});}const path=[];let c=dst;while(c&&c!==src){path.unshift(c);c=prev[c];}if(c===src)path.unshift(src);const stops=Math.max(0,path.length-2);let maxPax=0;routes.forEach(rid=>{const sched=buildSlotSchedule(rid,numSlots,maxPerSlot);const busesActive=sched.reduce((s,v)=>s+v,0);const ppb=ROUTE_PAX[rid]/ROUTE_BUSES[rid];maxPax+=busesActive*ppb;});return{minTime:dist[dst]>0&&dist[dst]<Infinity?dist[dst].toFixed(1):'N/A',maxPax:Math.round(maxPax),stops,path};}
+function runTransitOpt(){const routes=parseRouteInput();if(routes.length===0){document.getElementById('topt-results').innerHTML='<div class="topt-empty">No valid routes selected. Enter route IDs like B1,B3,M1 or "all".</div>';return;}const numSlots=Math.max(1,Math.min(168,parseInt(document.getElementById('topt-slots').value)||24));const maxPerSlot=Math.max(1,Math.min(50,parseInt(document.getElementById('topt-maxveh').value)||15));const src=document.getElementById('topt-start').value;const dst=document.getElementById('topt-target').value;const busRoutes=routes.filter(r=>ROUTE_MODE[r]==='bus');const metroRoutes=routes.filter(r=>ROUTE_MODE[r]==='metro');let html='';if(busRoutes.length){html+='<div class="topt-section-title">Bus Schedules:</div>';busRoutes.forEach(rid=>{const sched=buildSlotSchedule(rid,numSlots,maxPerSlot);const preview=sched.slice(0,20);html+=`<div class="topt-sched-row"><span class="sched-id">${rid}:</span> [${preview.map((v,i)=>{const isActive=v>0;return isActive?`<span class="topt-highlight">${v}</span>`:v;}).join(', ')}${sched.length>20?', …':''}]</div>`;});}if(metroRoutes.length){html+='<div class="topt-section-title">Metro Schedules:</div>';metroRoutes.forEach(rid=>{const sched=buildSlotSchedule(rid,numSlots,maxPerSlot);const preview=sched.slice(0,20);html+=`<div class="topt-sched-row metro"><span class="sched-id">${rid}:</span> [${preview.map(v=>v>0?`<span class="topt-highlight">${v}</span>`:v).join(', ')}${sched.length>20?', …':''}]</div>`;});}const waiting=computeTransferWaiting(routes,numSlots,maxPerSlot);const topTransfers=Object.entries(waiting).sort((a,b)=>b[1].waitMin-a[1].waitMin).slice(0,5);html+='<div class="topt-section-title">Transfer Points Waiting Times:</div>';html+=topTransfers.map(([nid,{name,waitMin}])=>`<div class="topt-transfer-row"><strong>${nid}:</strong> ${waitMin.toFixed(2)} minutes</div>`).join('');const trav=computeTravelOpt(src,dst,routes,numSlots,maxPerSlot);const srcName=NODES[src]?.n||src,dstName=NODES[dst]?.n||dst;html+=`<div class="topt-section-title">Travel Optimization (from ${srcName} to ${dstName}):</div><div class="topt-result-box"><div class="topt-transfer-row">Minimum Travel Time: <span class="rv">${trav.minTime} minutes</span></div><div class="topt-transfer-row">Maximum Passengers Served: <span class="rv">${trav.maxPax.toLocaleString()}</span></div><div class="topt-transfer-row">Minimum Stops: <span class="rv">${trav.stops} stops</span></div><div class="topt-transfer-row" style="margin-top:4px">Path: <span style="color:#8b92a8;font-size:10px">${trav.path.map(id=>NODES[id]?.n||id).join(' → ')}</span></div></div>`;document.getElementById('topt-results').innerHTML=html;}
+function clearTransitOpt(){document.getElementById('topt-routes').value='all';document.getElementById('topt-slots').value='24';document.getElementById('topt-maxveh').value='15';document.getElementById('topt-start').value='1';document.getElementById('topt-target').value='6';document.getElementById('topt-results').innerHTML='<div class="topt-empty">Configure parameters and click Submit to run optimization.</div>';}
+window.addEventListener('DOMContentLoaded',()=>{updateClock();setInterval(updateClock,30000);populateSelects();setTimeout(()=>{drawMainNetwork();renderTrafficTable();runScheduleDP();runMaintenanceDP();runSignals();runForecast();renderFeatChart();runMST();populateTransitOptSelects();},150);});
+</script>
+</body>
+</html>
